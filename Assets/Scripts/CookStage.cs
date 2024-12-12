@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using TMPro;
+using UnityEngine.XR.Interaction.Toolkit;
 
 public class CookStage : MonoBehaviour
 {
@@ -14,68 +15,69 @@ public class CookStage : MonoBehaviour
     [SerializeField] private AudioSource timeUpAudio;
     [SerializeField] private Canvas timerCanvas;
     [SerializeField] private TMP_Text timerText;
+    [SerializeField] private ParticleSystem smokeParticles;
 
+    public bool isCooked = false; // Flag to track if it's already cooked
     public bool isCooking = false;
 
     public void StartCooking()
     {
-        if (!isCooking)
+        // Prevent re-cooking if already cooked
+        if (!isCooking && !isCooked)
         {
+            smokeParticles.Play();
+            cookingAudio.Play();
             StartCoroutine(Cooking());
         }
     }
-
-    private void Update()
-    {
-        if (cookingAudio != null)
-        {
-            if (isCooking && !cookingAudio.isPlaying)
-            {
-                cookingAudio.Play();
-            }
-            else if (!isCooking && cookingAudio.isPlaying)
-            {
-                cookingAudio.Stop();
-            }
-        }
-    }
+    
 
     private IEnumerator Cooking()
     {
+        transform.GetComponent<XRGrabInteractable>().enabled = false;
         isCooking = true;
-        timerCanvas.enabled = true;
+        timerCanvas.gameObject.SetActive(true);
 
         float remainingTime = overallCookingTime;
-        float stageTime = overallCookingTime / 3f;
+        float stage1Time = overallCookingTime / 3f;
+        float stage2Time = 2 * stage1Time;
 
-        // Update the countdown timer in real time
+        MeshRenderer renderer = GetComponent<MeshRenderer>();
+
+        // Countdown timer with real-time updates
         while (remainingTime > 0)
         {
             timerText.text = FormatTime(remainingTime);
+
+            // Change to medium cooked material during stage 2
+            if (remainingTime <= stage2Time && remainingTime > stage1Time && renderer != null && mediumCookedMaterial != null)
+            {
+                renderer.material = mediumCookedMaterial;
+            }
+
+            // Change to cooked material during stage 3
+            if (remainingTime <= stage1Time && renderer != null && cookedMaterial != null)
+            {
+                renderer.material = cookedMaterial;
+            }
+
             remainingTime -= Time.deltaTime;
             yield return null;
         }
 
         timerText.text = "00:00:00";
 
-        // Stage 1: Leave as is
-        yield return new WaitForSeconds(stageTime);
-
-        // Stage 2: Medium cooked
-        MeshRenderer renderer = GetComponent<MeshRenderer>();
-        if (renderer != null && mediumCookedMaterial != null)
+        // Play time-up audio when the timer ends
+        if (timeUpAudio != null)
         {
-            renderer.material = mediumCookedMaterial;
+            timeUpAudio.Play();
         }
-        yield return new WaitForSeconds(stageTime);
 
-        // Stage 3: Fully cooked
-        if (renderer != null && cookedMaterial != null)
-        {
-            renderer.material = cookedMaterial;
-        }
-        timeUpAudio.Play();
-
+        
+        isCooking = false;
+        transform.GetComponent<XRGrabInteractable>().enabled = false;
+        isCooked = true; 
+        //timerCanvas.gameObject.SetActive(false);
     }
 
     private string FormatTime(float time)

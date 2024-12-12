@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
 
 public class CookingManager : MonoBehaviour
 {
-    private bool panOnStove = false;
+    public bool panOnStove = false;
     private IsPan panObject;
 
     private void OnTriggerEnter(Collider other)
@@ -19,28 +20,58 @@ public class CookingManager : MonoBehaviour
     {
         if (other.CompareTag("Pan"))
         {
-            panOnStove = false;
-            panObject = null;
-            foreach (var item in panObject.food)
+            // Check if panObject is not null before accessing its food list
+            if (panObject != null)
             {
-                item.GetComponent<CookStage>().isCooking = false;
+                foreach (var item in panObject.food)
+                {
+                    // Safely check if item has a CookStage component
+                    CookStage cookStage = item.GetComponent<CookStage>();
+                    if (cookStage != null)
+                    {
+                        cookStage.isCooking = false;
+                    }
+                }
             }
+            panOnStove = false;
+            panObject = null; // Reset panObject after processing
         }
     }
 
     private void OnTriggerStay(Collider other)
     {
+        // Check if 'other' is tagged as 'Pan' and has the XRGrabInteractable component
+        if (other.CompareTag("Pan"))
+        {
+            XRGrabInteractable grabInteractable = other.GetComponent<XRGrabInteractable>();
+            if (grabInteractable != null)
+            {
+                grabInteractable.enabled = false;
+            }
+            else
+            {
+                Debug.LogWarning("XRGrabInteractable component not found on the Pan object.");
+            }
+        }
+
+        // Check if the pan is on the stove and contains food
         if (other.CompareTag("Pan") && panOnStove && panObject != null && panObject.hasFood)
         {
-            // Trigger cooking on each food item in the pan
-            foreach (GameObject foodItem in panObject.food)
+            if (panObject.food != null)
             {
-                CookStage cookStage = foodItem.GetComponent<CookStage>();
-                if (cookStage != null)
+                foreach (GameObject foodItem in panObject.food)
                 {
-                    cookStage.StartCooking();
+                    if (foodItem != null)
+                    {
+                        CookStage cookStage = foodItem.GetComponent<CookStage>();
+                        if (cookStage != null)
+                        {
+                            cookStage.StartCooking();
+                        }
+                    }
                 }
             }
         }
     }
+
 }
