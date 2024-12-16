@@ -1,6 +1,12 @@
 # IntoMyKitchen VR Simulation  
 
-**IntoMyKitchen** is a virtual reality cooking simulation designed to let users cook, experiment, and learn recipes without wasting ingredients or creating a mess.  
+**IntoMyKitchen** is a virtual reality cooking simulation designed to let users cook, experiment, and learn recipes without wasting ingredients or creating a mess. 
+
+
+## Video Demo
+You can check the prototype on this link. 
+https://drive.google.com/file/d/1jQq-N9ZLZwGjUxdXs1rfUHzoR4FLY4fQ/view?usp=sharing
+
 
 ## Features  
 - Interact with virtual kitchen elements, including ingredients and appliances.  
